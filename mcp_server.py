@@ -294,16 +294,15 @@ if __name__ == "__main__":
     # Run the server with uvicorn for proper deployment
     import os
     import uvicorn
-    from starlette.applications import Starlette
     from starlette.responses import JSONResponse
-    from starlette.routing import Route, Mount
+    from starlette.routing import Route
 
     # Get port and host from environment (Render sets PORT automatically)
     port = int(os.environ.get("PORT", 8000))
     host = os.environ.get("HOST", "0.0.0.0")
 
     print(f"Starting MCP server on {host}:{port}")
-    print(f"MCP endpoint will be available at http://{host}:{port}/")
+    print(f"MCP endpoints will be available at http://{host}:{port}/")
 
     # Create root health check endpoint
     async def health_check(request):
@@ -312,29 +311,22 @@ if __name__ == "__main__":
             "status": "running",
             "version": "1.0.0",
             "mcp_version": "2025-03-26",
-            "endpoints": {
-                "mcp": "/mcp",
-                "sse": "/sse"
-            },
+            "transport": "streamable-http",
             "tools": [
                 "upload_data",
                 "create_scatter_plot",
                 "list_datasets",
                 "get_column_info"
             ],
-            "description": "Create interactive scatter plots from CSV/Excel data"
+            "description": "Create interactive scatter plots from CSV/Excel data",
+            "documentation": "https://github.com/Amsamms/scatter-plotter-mcp"
         })
 
-    # Create ASGI app from FastMCP using streamable HTTP
-    mcp_app = mcp.streamable_http_app()
+    # Get the MCP ASGI app
+    app = mcp.streamable_http_app()
 
-    # Wrap with Starlette to add root endpoint
-    app = Starlette(
-        routes=[
-            Route("/", health_check),
-            Mount("/mcp", app=mcp_app),
-        ]
-    )
+    # Add health check route to the MCP app
+    app.add_route("/", health_check, methods=["GET", "HEAD"])
 
     # Run with uvicorn for production deployment
     uvicorn.run(
