@@ -291,13 +291,15 @@ def get_column_info(dataset_name: str = "dataset", column_name: str = "") -> str
 
 
 if __name__ == "__main__":
-    # Run the server with SSE transport
+    # Run the server with HTTP transport (recommended for web deployment)
     import os
 
-    # For deployment platforms, we need to run as HTTP server
+    # Get port from environment variable (Render/Railway set this automatically)
     port = int(os.environ.get("PORT", 8000))
 
-    print(f"Starting MCP server on port {port}")
+    print(f"Starting MCP server on 0.0.0.0:{port}")
+    print(f"Server will be accessible at http://0.0.0.0:{port}/mcp/")
 
-    # Run with SSE transport (Server-Sent Events over HTTP)
-    mcp.run(transport="sse", port=port)
+    # Run with HTTP transport (Streamable HTTP - recommended for deployment)
+    # host="0.0.0.0" allows remote connections (required for Render/Railway)
+    mcp.run(transport="http", host="0.0.0.0", port=port)
