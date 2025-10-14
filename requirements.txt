@@ -6,3 +6,4 @@ plotly>=5.9.0
 scipy>=1.8.0
 openpyxl>=3.0.10
 kaleido>=0.2.1
+uvicorn>=0.30.0

@@ -291,16 +291,24 @@ def get_column_info(dataset_name: str = "dataset", column_name: str = "") -> str
 
 
 if __name__ == "__main__":
-    # Run the server with Streamable HTTP transport
+    # Run the server with uvicorn for proper deployment
     import os
+    import uvicorn
 
-    # Set port via environment variable (FastMCP reads this automatically)
-    port = os.environ.get("PORT", "8000")
-    os.environ["PORT"] = port
+    # Get port and host from environment (Render sets PORT automatically)
+    port = int(os.environ.get("PORT", 8000))
+    host = os.environ.get("HOST", "0.0.0.0")
 
-    print(f"Starting MCP server on port {port}")
-    print(f"FastMCP will bind to 0.0.0.0:{port} automatically")
+    print(f"Starting MCP server on {host}:{port}")
+    print(f"MCP endpoint will be available at http://{host}:{port}/")
 
-    # Run with Streamable HTTP transport
-    # FastMCP automatically reads PORT environment variable for binding
-    mcp.run(transport="streamable-http", mount_path="/mcp")
+    # Create ASGI app from FastMCP using streamable HTTP
+    app = mcp.streamable_http_app()
+
+    # Run with uvicorn for production deployment
+    uvicorn.run(
+        app,
+        host=host,
+        port=port,
+        log_level="info"
+    )
