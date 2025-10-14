@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: scatter-plotter-mcp
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python mcp_server.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.12
+    autoDeploy: true
