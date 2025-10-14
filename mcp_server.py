@@ -292,4 +292,12 @@ def get_column_info(dataset_name: str = "dataset", column_name: str = "") -> str
 
 if __name__ == "__main__":
     # Run the server
-    mcp.run()
+    import os
+
+    # Get port from environment variable (for deployment platforms like Render)
+    port = int(os.environ.get("PORT", 8000))
+    host = os.environ.get("HOST", "0.0.0.0")
+
+    # Run with HTTP transport for deployment
+    print(f"Starting MCP server on {host}:{port}")
+    mcp.run(transport="sse", host=host, port=port)
