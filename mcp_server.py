@@ -294,16 +294,15 @@ if __name__ == "__main__":
     # Run the server with uvicorn for proper deployment
     import os
     import uvicorn
-    from starlette.applications import Starlette
     from starlette.responses import JSONResponse
-    from starlette.routing import Route, Mount
+    from starlette.routing import Route
 
     # Get port and host from environment (Render sets PORT automatically)
     port = int(os.environ.get("PORT", 8000))
     host = os.environ.get("HOST", "0.0.0.0")
 
     print(f"Starting MCP server on {host}:{port}")
-    print(f"MCP endpoints will be available at http://{host}:{port}/mcp/")
+    print(f"MCP endpoints will be available at http://{host}:{port}/mcp")
 
     # Create root health check endpoint
     async def health_check(request):
@@ -325,16 +324,11 @@ if __name__ == "__main__":
             "usage": "Add this URL to ChatGPT Connectors: https://scatter-plotter-mcp.onrender.com"
         })
 
-    # Get the MCP ASGI app
-    mcp_app = mcp.streamable_http_app()
+    # Get the MCP ASGI app (it already has /mcp route built-in)
+    app = mcp.streamable_http_app()
 
-    # Create main app with health check at root and MCP at /mcp
-    app = Starlette(
-        routes=[
-            Route("/", health_check, methods=["GET", "HEAD"]),
-            Mount("/mcp", app=mcp_app),
-        ]
-    )
+    # Add health check at root (the MCP app already serves /mcp)
+    app.add_route("/", health_check, methods=["GET", "HEAD"])
 
     # Run with uvicorn for production deployment
     uvicorn.run(
