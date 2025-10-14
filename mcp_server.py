@@ -291,15 +291,16 @@ def get_column_info(dataset_name: str = "dataset", column_name: str = "") -> str
 
 
 if __name__ == "__main__":
-    # Run the server with HTTP transport (recommended for web deployment)
+    # Run the server with Streamable HTTP transport
     import os
 
-    # Get port from environment variable (Render/Railway set this automatically)
-    port = int(os.environ.get("PORT", 8000))
+    # Set port via environment variable (FastMCP reads this automatically)
+    port = os.environ.get("PORT", "8000")
+    os.environ["PORT"] = port
 
-    print(f"Starting MCP server on 0.0.0.0:{port}")
-    print(f"Server will be accessible at http://0.0.0.0:{port}/mcp/")
+    print(f"Starting MCP server on port {port}")
+    print(f"FastMCP will bind to 0.0.0.0:{port} automatically")
 
-    # Run with HTTP transport (Streamable HTTP - recommended for deployment)
-    # host="0.0.0.0" allows remote connections (required for Render/Railway)
-    mcp.run(transport="http", host="0.0.0.0", port=port)
+    # Run with Streamable HTTP transport
+    # FastMCP automatically reads PORT environment variable for binding
+    mcp.run(transport="streamable-http", mount_path="/mcp")
