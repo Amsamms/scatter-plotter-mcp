@@ -291,13 +291,13 @@ def get_column_info(dataset_name: str = "dataset", column_name: str = "") -> str
 
 
 if __name__ == "__main__":
-    # Run the server
+    # Run the server with SSE transport
     import os
 
-    # Get port from environment variable (for deployment platforms like Render)
+    # For deployment platforms, we need to run as HTTP server
     port = int(os.environ.get("PORT", 8000))
-    host = os.environ.get("HOST", "0.0.0.0")
 
-    # Run with HTTP transport for deployment
-    print(f"Starting MCP server on {host}:{port}")
-    mcp.run(transport="sse", host=host, port=port)
+    print(f"Starting MCP server on port {port}")
+
+    # Run with SSE transport (Server-Sent Events over HTTP)
+    mcp.run(transport="sse", port=port)
