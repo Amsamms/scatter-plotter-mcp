@@ -294,6 +294,9 @@ if __name__ == "__main__":
     # Run the server with uvicorn for proper deployment
     import os
     import uvicorn
+    from starlette.applications import Starlette
+    from starlette.responses import JSONResponse
+    from starlette.routing import Route, Mount
 
     # Get port and host from environment (Render sets PORT automatically)
     port = int(os.environ.get("PORT", 8000))
@@ -302,8 +305,36 @@ if __name__ == "__main__":
     print(f"Starting MCP server on {host}:{port}")
     print(f"MCP endpoint will be available at http://{host}:{port}/")
 
+    # Create root health check endpoint
+    async def health_check(request):
+        return JSONResponse({
+            "name": "Scatter Plotter MCP Server",
+            "status": "running",
+            "version": "1.0.0",
+            "mcp_version": "2025-03-26",
+            "endpoints": {
+                "mcp": "/mcp",
+                "sse": "/sse"
+            },
+            "tools": [
+                "upload_data",
+                "create_scatter_plot",
+                "list_datasets",
+                "get_column_info"
+            ],
+            "description": "Create interactive scatter plots from CSV/Excel data"
+        })
+
     # Create ASGI app from FastMCP using streamable HTTP
-    app = mcp.streamable_http_app()
+    mcp_app = mcp.streamable_http_app()
+
+    # Wrap with Starlette to add root endpoint
+    app = Starlette(
+        routes=[
+            Route("/", health_check),
+            Mount("/mcp", app=mcp_app),
+        ]
+    )
 
     # Run with uvicorn for production deployment
     uvicorn.run(

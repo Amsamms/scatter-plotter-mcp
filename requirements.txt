@@ -7,3 +7,4 @@ scipy>=1.8.0
 openpyxl>=3.0.10
 kaleido>=0.2.1
 uvicorn>=0.30.0
+starlette>=0.27.0
