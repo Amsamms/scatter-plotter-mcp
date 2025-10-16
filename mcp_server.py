@@ -6,6 +6,7 @@ A Model Context Protocol server for creating interactive scatter plots from data
 import sys
 import os
 import json
+import base64
 from typing import Optional, List
 from mcp.server.fastmcp import FastMCP
 from mcp.types import TextContent, ImageContent
@@ -208,6 +209,9 @@ def create_scatter_plot(
         # Convert to image bytes
         img_bytes = plotting_engine.figure_to_bytes(fig, format='png')
 
+        # Base64-encode the image for MCP ImageContent
+        img_base64 = base64.b64encode(img_bytes).decode('utf-8')
+
         # Create response with image and info
         info_text = f"""Chart created successfully!
 
@@ -227,7 +231,7 @@ The chart shows your data as {"a time-series plot" if has_date_column else "a sc
 
         return [
             TextContent(type="text", text=info_text),
-            ImageContent(type="image", data=img_bytes, mimeType="image/png")
+            ImageContent(type="image", data=img_base64, mimeType="image/png")
         ]
 
     except Exception as e:
