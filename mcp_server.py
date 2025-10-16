@@ -4,6 +4,7 @@ A Model Context Protocol server for creating interactive scatter plots from data
 """
 
 import sys
+import os
 import json
 from typing import Optional, List
 from mcp.server.fastmcp import FastMCP
@@ -14,8 +15,19 @@ from data_processor import DataProcessor
 from plotting_engine import PlottingEngine
 
 
-# Initialize FastMCP server
-mcp = FastMCP("Scatter Plotter", dependencies=["pandas", "plotly", "scipy", "numpy"])
+# Get port and host from environment (Render sets PORT automatically)
+# Must be read before FastMCP initialization
+port = int(os.environ.get("PORT", 8000))
+host = os.environ.get("HOST", "0.0.0.0")
+
+# Initialize FastMCP server with host and port
+# FastMCP 2.12+ requires host and port in constructor, not in run()
+mcp = FastMCP(
+    "Scatter Plotter",
+    port=port,
+    host=host,
+    dependencies=["pandas", "plotly", "scipy", "numpy"]
+)
 
 # Initialize modules
 data_processor = DataProcessor()
@@ -315,17 +327,11 @@ async def health_check(request):
 
 
 if __name__ == "__main__":
-    import os
-
-    # Get port and host from environment (Render sets PORT automatically)
-    port = int(os.environ.get("PORT", 8000))
-    host = os.environ.get("HOST", "0.0.0.0")
-
     print(f"Starting MCP server on {host}:{port}")
     print(f"MCP endpoint will be available at http://{host}:{port}/mcp/")
     print(f"Health check available at http://{host}:{port}/")
 
     # Run the server using FastMCP's built-in method
-    # FastMCP 2.12+ supports passing host and port directly
     # Use "sse" transport for ChatGPT compatibility
-    mcp.run(transport="sse", host=host, port=port)
+    # Note: host and port are set in FastMCP constructor (lines 25-30)
+    mcp.run(transport="sse")
