@@ -75,30 +75,44 @@ mcp.run(transport="sse")
 
 ---
 
-### Mistake 4: Using environment variables instead of direct parameters for FastMCP 2.12+
-**Error**: Server running on `127.0.0.1:8000` instead of `0.0.0.0:10000`, Render can't detect port
+### Mistake 4: Trying to pass host and port to mcp.run() instead of FastMCP constructor
+**Error**: `TypeError: FastMCP.run() got an unexpected keyword argument 'host'`
 
 **What I did wrong**:
 ```python
-# WRONG - Environment variables don't work reliably with FastMCP SSE in 2.12+
-os.environ["FASTMCP_SERVER_PORT"] = port
-os.environ["FASTMCP_SERVER_HOST"] = host
-mcp.run(transport="sse")
-```
-
-**Why it failed**:
-- FastMCP 2.12+ SSE ignores the FASTMCP_SERVER_* environment variables
-- Server defaulted to 127.0.0.1:8000
-- Render needs server on 0.0.0.0 with the PORT from environment
-- Port detection failed, causing deployment to hang
-
-**Correct solution**:
-```python
-# CORRECT - Pass host and port directly to mcp.run()
+# WRONG - FastMCP 2.12+ doesn't accept host/port in run() for SSE transport
 port = int(os.environ.get("PORT", 8000))
 host = os.environ.get("HOST", "0.0.0.0")
 mcp.run(transport="sse", host=host, port=port)
 ```
+
+**Why it failed**:
+- FastMCP requires host and port to be set during initialization, not in run()
+- The run() method only accepts transport parameter for SSE
+- This caused TypeError at runtime
+
+**Correct solution**:
+```python
+# CORRECT - Pass host and port to FastMCP constructor
+import os
+
+# Read environment variables at module level
+port = int(os.environ.get("PORT", 8000))
+host = os.environ.get("HOST", "0.0.0.0")
+
+# Initialize FastMCP with host and port
+mcp = FastMCP(
+    "Scatter Plotter",
+    port=port,
+    host=host,
+    dependencies=["pandas", "plotly", "scipy", "numpy"]
+)
+
+# Later in __main__:
+mcp.run(transport="sse")  # No host/port parameters here
+```
+
+**Key learning**: For FastMCP SSE transport, the MCP endpoint is automatically available at `/sse`, not `/mcp/`.
 
 ---
 
@@ -163,25 +177,38 @@ uvicorn>=0.30.0
 starlette>=0.27.0
 ```
 
-**mcp_server.py** (key section):
+**mcp_server.py** (key sections):
 ```python
+# At module level (before any FastMCP initialization)
+import os
+
+port = int(os.environ.get("PORT", 8000))
+host = os.environ.get("HOST", "0.0.0.0")
+
+# Initialize FastMCP with port and host
+mcp = FastMCP(
+    "Scatter Plotter",
+    port=port,
+    host=host,
+    dependencies=["pandas", "plotly", "scipy", "numpy"]
+)
+
+# Health check endpoint
 @mcp.custom_route("/", methods=["GET", "HEAD"])
 async def health_check(request):
     from starlette.responses import JSONResponse
     return JSONResponse({
         "name": "Scatter Plotter MCP Server",
         "status": "running",
-        "mcp_endpoint": "/mcp/",
+        "transport": "sse",
+        "mcp_endpoint": "/sse",
+        "chatgpt_connector_url": "https://scatter-plotter-mcp.onrender.com/sse",
         "tools": ["upload_data", "create_scatter_plot", "list_datasets", "get_column_info"]
     })
 
 if __name__ == "__main__":
-    import os
-    port = os.environ.get("PORT", "8000")
-    host = os.environ.get("HOST", "0.0.0.0")
-
-    os.environ["FASTMCP_SERVER_PORT"] = port
-    os.environ["FASTMCP_SERVER_HOST"] = host
+    print(f"Starting MCP server on {host}:{port}")
+    print(f"MCP endpoint will be available at http://{host}:{port}/sse")
 
     mcp.run(transport="sse")
 ```
@@ -193,6 +220,33 @@ if __name__ == "__main__":
 - Number of deployment attempts: 4
 - Issues encountered: 3 major errors
 - Solution: Progressive debugging with proper documentation research
+
+---
+
+## ChatGPT Integration Steps
+
+### How to Add the Scatter Plotter to ChatGPT:
+
+1. **Open ChatGPT** at https://chatgpt.com
+2. **Enable Developer Mode**:
+   - Click your profile (bottom left)
+   - Go to **Settings** > **Connectors** > **Advanced**
+   - Enable **Developer Mode**
+3. **Add the MCP Connector**:
+   - In Connectors tab, click **Add Connector**
+   - Enter the SSE endpoint URL: `https://scatter-plotter-mcp.onrender.com/sse`
+   - Click **Add**
+4. **Test the Connection**:
+   - Start a new chat
+   - Ask ChatGPT to list available tools
+   - You should see: upload_data, create_scatter_plot, list_datasets, get_column_info
+
+### Verified Working URL:
+```
+https://scatter-plotter-mcp.onrender.com/sse
+```
+
+**Note**: For SSE transport, the endpoint is `/sse`, not `/mcp/`. This is automatically created by FastMCP.
 
 ---
 
