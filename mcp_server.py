@@ -331,5 +331,6 @@ if __name__ == "__main__":
     print(f"Health check available at http://{host}:{port}/")
 
     # Run the server using FastMCP's built-in method
+    # Use "sse" transport for ChatGPT compatibility
     # This properly initializes the task group and handles HTTP requests
-    mcp.run(transport="http")
+    mcp.run(transport="sse")
