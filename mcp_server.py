@@ -312,8 +312,8 @@ async def health_check(request):
         "status": "running",
         "version": "1.0.0",
         "mcp_version": "2025-03-26",
-        "transport": "http",
-        "mcp_endpoint": "/mcp/",
+        "transport": "sse",
+        "mcp_endpoint": "/sse",
         "tools": [
             "upload_data",
             "create_scatter_plot",
@@ -322,7 +322,7 @@ async def health_check(request):
         ],
         "description": "Create interactive scatter plots from CSV/Excel data",
         "documentation": "https://github.com/Amsamms/scatter-plotter-mcp",
-        "usage": "Add this URL to ChatGPT Connectors: https://scatter-plotter-mcp.onrender.com"
+        "chatgpt_connector_url": "https://scatter-plotter-mcp.onrender.com/sse"
     })
 
 
