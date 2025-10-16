@@ -278,6 +278,7 @@ class PlottingEngine:
     def figure_to_bytes(fig: go.Figure, format: str = 'png') -> bytes:
         """
         Convert Plotly figure to image bytes
+        Auto-installs Chrome for Kaleido if needed
 
         Args:
             fig: Plotly figure
@@ -286,4 +287,25 @@ class PlottingEngine:
         Returns:
             Image bytes
         """
-        return fig.to_image(format=format, engine='kaleido')
+        try:
+            # Try to render the image
+            return fig.to_image(format=format, engine='kaleido')
+        except Exception as e:
+            # If Chrome is missing, install it automatically
+            if 'Chrome' in str(e) or 'chrome' in str(e):
+                print("Chrome not found. Installing Chrome for Kaleido...")
+                try:
+                    import kaleido
+                    kaleido.get_chrome_sync()
+                    print("Chrome installed successfully!")
+                    # Retry after installation
+                    return fig.to_image(format=format, engine='kaleido')
+                except Exception as install_error:
+                    raise RuntimeError(
+                        f"Failed to install Chrome for Kaleido: {install_error}\n"
+                        f"Original error: {e}\n"
+                        f"Please install Chrome manually or contact support."
+                    )
+            else:
+                # Re-raise if it's not a Chrome-related error
+                raise
