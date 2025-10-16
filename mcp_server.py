@@ -290,50 +290,41 @@ def get_column_info(dataset_name: str = "dataset", column_name: str = "") -> str
         return f"Error: {str(e)}"
 
 
-if __name__ == "__main__":
-    # Run the server with uvicorn for proper deployment
-    import os
-    import uvicorn
+# Add health check endpoint using custom_route decorator
+@mcp.custom_route("/", methods=["GET", "HEAD"])
+async def health_check(request):
+    """Health check endpoint for monitoring and ChatGPT verification"""
     from starlette.responses import JSONResponse
-    from starlette.routing import Route
+    return JSONResponse({
+        "name": "Scatter Plotter MCP Server",
+        "status": "running",
+        "version": "1.0.0",
+        "mcp_version": "2025-03-26",
+        "transport": "http",
+        "mcp_endpoint": "/mcp/",
+        "tools": [
+            "upload_data",
+            "create_scatter_plot",
+            "list_datasets",
+            "get_column_info"
+        ],
+        "description": "Create interactive scatter plots from CSV/Excel data",
+        "documentation": "https://github.com/Amsamms/scatter-plotter-mcp",
+        "usage": "Add this URL to ChatGPT Connectors: https://scatter-plotter-mcp.onrender.com"
+    })
+
+
+if __name__ == "__main__":
+    import os
 
     # Get port and host from environment (Render sets PORT automatically)
     port = int(os.environ.get("PORT", 8000))
     host = os.environ.get("HOST", "0.0.0.0")
 
     print(f"Starting MCP server on {host}:{port}")
-    print(f"MCP endpoints will be available at http://{host}:{port}/mcp")
+    print(f"MCP endpoint will be available at http://{host}:{port}/mcp/")
+    print(f"Health check available at http://{host}:{port}/")
 
-    # Create root health check endpoint
-    async def health_check(request):
-        return JSONResponse({
-            "name": "Scatter Plotter MCP Server",
-            "status": "running",
-            "version": "1.0.0",
-            "mcp_version": "2025-03-26",
-            "transport": "streamable-http",
-            "mcp_endpoint": "/mcp",
-            "tools": [
-                "upload_data",
-                "create_scatter_plot",
-                "list_datasets",
-                "get_column_info"
-            ],
-            "description": "Create interactive scatter plots from CSV/Excel data",
-            "documentation": "https://github.com/Amsamms/scatter-plotter-mcp",
-            "usage": "Add this URL to ChatGPT Connectors: https://scatter-plotter-mcp.onrender.com"
-        })
-
-    # Get the MCP ASGI app (it already has /mcp route built-in)
-    app = mcp.streamable_http_app()
-
-    # Add health check at root (the MCP app already serves /mcp)
-    app.add_route("/", health_check, methods=["GET", "HEAD"])
-
-    # Run with uvicorn for production deployment
-    uvicorn.run(
-        app,
-        host=host,
-        port=port,
-        log_level="info"
-    )
+    # Run the server using FastMCP's built-in method
+    # This properly initializes the task group and handles HTTP requests
+    mcp.run(transport="http", port=port, host=host)
