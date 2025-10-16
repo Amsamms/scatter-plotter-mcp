@@ -43,17 +43,28 @@ def upload_data(data: str, name: str = "dataset") -> str:
     Upload and validate CSV or Excel data for plotting.
 
     This is the first step - upload your data before creating plots.
-    Data can be provided as:
-    - CSV text directly
-    - Base64-encoded CSV
-    - Base64-encoded Excel file
+
+    IMPORTANT FOR CHATGPT: Do NOT pass file paths! This tool cannot access file systems.
+    Instead, you must:
+    1. Read the file contents first (using your file reading capabilities)
+    2. Convert to CSV text format OR base64-encode the binary data
+    3. Pass the actual data content as a string
+
+    Accepted data formats:
+    - CSV text directly (preferred for Excel files - read and convert to CSV first)
+    - Base64-encoded CSV file
+    - Base64-encoded Excel file (.xlsx, .xls)
 
     Args:
-        data: CSV text or base64-encoded data
+        data: The actual file contents as CSV text or base64-encoded string (NOT a file path!)
         name: Name for this dataset (default: "dataset")
 
     Returns:
         Summary of the uploaded data including columns, rows, and preview
+
+    Example usage:
+        For Excel files: Read the Excel file, convert to CSV text, then call upload_data(csv_text)
+        For CSV files: Read the CSV file contents, then call upload_data(csv_content)
     """
     try:
         # Load the data
