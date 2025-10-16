@@ -209,10 +209,13 @@ def create_scatter_plot(
         # Convert to image bytes
         img_bytes = plotting_engine.figure_to_bytes(fig, format='png')
 
-        # Base64-encode the image for MCP ImageContent
+        # Base64-encode the image
         img_base64 = base64.b64encode(img_bytes).decode('utf-8')
 
-        # Create response with image and info
+        # Create data URL for embedding in markdown (ChatGPT compatible)
+        data_url = f"data:image/png;base64,{img_base64}"
+
+        # Create response with embedded image
         info_text = f"""Chart created successfully!
 
 Dataset: {dataset_name}
@@ -222,17 +225,14 @@ Primary Y-axis: {', '.join(y_primary)}
 Data points: {len(df):,}
 {"Outliers removed: " + str(removed) + f" ({removed/original_rows*100:.1f}%)" if remove_outliers and removed > 0 else ""}
 
-The chart shows your data as {"a time-series plot" if has_date_column else "a scatter plot"} with interactive features:
-- Hover over points to see values
-- Zoom in/out using the toolbar
-- Pan across the chart
-- Download the image
+The chart shows your data as {"a time-series plot" if has_date_column else "a scatter plot"}.
+
+![Scatter Plot]({data_url})
+
+You can right-click the image above to save it.
 """
 
-        return [
-            TextContent(type="text", text=info_text),
-            ImageContent(type="image", data=img_base64, mimeType="image/png")
-        ]
+        return [TextContent(type="text", text=info_text)]
 
     except Exception as e:
         error_trace = traceback.format_exc()
