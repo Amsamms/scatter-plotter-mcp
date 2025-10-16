@@ -317,9 +317,14 @@ async def health_check(request):
 if __name__ == "__main__":
     import os
 
-    # Get port and host from environment (Render sets PORT automatically)
-    port = int(os.environ.get("PORT", 8000))
+    # Set environment variables for FastMCP configuration
+    # Render automatically sets PORT, we need to propagate it to FastMCP
+    port = os.environ.get("PORT", "8000")
     host = os.environ.get("HOST", "0.0.0.0")
+
+    # FastMCP reads these environment variables
+    os.environ["FASTMCP_SERVER_PORT"] = port
+    os.environ["FASTMCP_SERVER_HOST"] = host
 
     print(f"Starting MCP server on {host}:{port}")
     print(f"MCP endpoint will be available at http://{host}:{port}/mcp/")
@@ -327,4 +332,4 @@ if __name__ == "__main__":
 
     # Run the server using FastMCP's built-in method
     # This properly initializes the task group and handles HTTP requests
-    mcp.run(transport="http", port=port, host=host)
+    mcp.run(transport="http")
